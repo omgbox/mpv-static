@@ -78,7 +78,6 @@ jobs:
           --enable-encoder=ass
           --disable-doc
           --disable-debug
-          --pkg-config-flags=--static
           --extra-cflags=-static
           --extra-ldflags=-static
           EOF
