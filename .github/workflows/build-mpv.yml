@@ -1,0 +1,137 @@
+﻿name: Build Static MPV
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+env:
+  MPV_VERSION: "0.39.0"
+  FFMPEG_VERSION: "7.1.1"
+  LIBASS_VERSION: "0.17.3"
+  LUAJIT_VERSION: "2.1.ROLLING"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git devscripts equivs \
+            autoconf automake build-essential cmake \
+            libass-dev libfreetype6-dev libgnutls28-dev \
+            libmp3lame-dev libtool libva-dev libvdpau-dev \
+            libvorbis-dev libxcb1-dev libxcb-shm0-dev \
+            libxcb-xfixes0-dev meson ninja-build pkg-config \
+            texinfo wget yasm zlib1g-dev \
+            nasm libnuma-dev libdav1d-dev
+
+      - name: Build LuaJIT
+        run: |
+          git clone https://github.com/LuaJIT/LuaJIT.git
+          cd LuaJIT
+          git checkout v${{ env.LUAJIT_VERSION }} || git checkout master
+          sed -i "s/mixed/static/g" src/Makefile
+          make -j$(nproc)
+          sudo make install
+          cd ..
+
+      - name: Build MPV
+        run: |
+          git clone https://github.com/mpv-player/mpv-build.git
+          cd mpv-build
+          ./use-libass-custom ${{ env.LIBASS_VERSION }}
+          ./use-ffmpeg-custom n${{ env.FFMPEG_VERSION }}
+          ./use-mpv-custom v${{ env.MPV_VERSION }}
+
+          cat > ffmpeg_options <<'EOF'
+          --enable-static
+          --disable-shared
+          --enable-gpl
+          --enable-version3
+          --enable-libass
+          --enable-libfreetype
+          --enable-libdav1d
+          --enable-decoder=*
+          --enable-parser=*
+          --enable-muxer=mpeg1video
+          --enable-muxer=mpeg2video
+          --enable-muxer=mp3
+          --enable-muxer=opus
+          --enable-muxer=ass
+          --enable-muxer=srt
+          --enable-muxer=webvtt
+          --enable-encoder=mpeg1video
+          --enable-encoder=mpeg2video
+          --enable-encoder=mp2
+          --enable-encoder=mp3
+          --enable-encoder=opus
+          --enable-encoder=srt
+          --enable-encoder=ass
+          --disable-doc
+          --disable-debug
+          --extra-cflags=-static
+          --extra-ldflags=-static
+          EOF
+
+          cat > mpv_options <<'EOF'
+          --enable-static
+          --disable-shared
+          --disable-cplayer
+          --disable-alsa
+          --disable-pulse
+          --disable-jack
+          --disable-sndio
+          --disable-egl-x11
+          --disable-x11
+          --disable-wayland
+          --disable-gl
+          --disable-vulkan
+          --disable-libplacebo
+          --disable-javascript
+          --disable-pdf
+          --disable-dvdnav
+          --disable-cdda
+          --disable-avcap
+          --disable-libbluray
+          --disable-uchardet
+          --disable-rubberband
+          --disable-zimg
+          --disable-libsmbclient
+          --disable-libarchive
+          --enable-libass
+          --disable-libmpv-shared
+          --enable-encoding
+          --disable-tests
+          --disable-manpage-build
+          EOF
+
+          ./rebuild -j$(nproc)
+
+      - name: Verify binary
+        run: |
+          file mpv-build/mpv/build/mpv
+          ldd mpv-build/mpv/build/mpv || echo "Static binary (no dynamic dependencies)"
+          mpv-build/mpv/build/mpv --list-encoders 2>/dev/null || true
+          mpv-build/mpv/build/mpv --list-decoders 2>/dev/null || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mpv-static
+          path: mpv-build/mpv/build/mpv
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mpv-build/mpv/build/mpv
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
