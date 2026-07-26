@@ -1,6 +1,9 @@
 name: Build MPV (Windows)
 
 on:
+  push:
+    tags:
+      - '*'
   workflow_dispatch:
 
 env:
