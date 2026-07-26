@@ -24,8 +24,8 @@ jobs:
           sudo apt-get install -y \
             git devscripts equivs \
             autoconf automake build-essential cmake \
-            libass-dev libfreetype-dev libgnutls28-dev \
-            libnettle-dev libhogweed-dev libtasn1-6-dev libunistring-dev \
+            libass-dev libfreetype-dev \
+            libssl-dev \
             libmp3lame-dev libtool libva-dev libvdpau-dev \
             libvorbis-dev libxcb1-dev libxcb-shm0-dev \
             libxcb-xfixes0-dev meson ninja-build pkg-config \
@@ -58,6 +58,8 @@ jobs:
           --enable-libass
           --enable-libfreetype
           --enable-libdav1d
+          --enable-openssl
+          --disable-gnutls
           --enable-decoder=*
           --enable-parser=*
           --enable-muxer=mpeg1video
