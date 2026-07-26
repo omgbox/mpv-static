@@ -75,32 +75,30 @@ jobs:
           EOF
 
           cat > mpv_options <<'EOF'
-          --disable-cplayer
-          --disable-alsa
-          --disable-pulse
-          --disable-jack
-          --disable-sndio
-          --disable-egl-x11
-          --disable-x11
-          --disable-wayland
-          --disable-gl
-          --disable-vulkan
-          --disable-libplacebo
-          --disable-javascript
-          --disable-pdf
-          --disable-dvdnav
-          --disable-cdda
-          --disable-avcap
-          --disable-libbluray
-          --disable-uchardet
-          --disable-rubberband
-          --disable-zimg
-          --disable-libsmbclient
-          --disable-libarchive
-          --disable-libmpv-shared
-          --enable-encoding
-          --disable-tests
-          --disable-manpage-build
+          -Dcplayer=false
+          -Dlibmpv=disabled
+          -Dalsa=disabled
+          -Dpulse=disabled
+          -Djack=disabled
+          -Dsndio=disabled
+          -Degl-x11=disabled
+          -Dx11=disabled
+          -Dwayland=disabled
+          -Dgl=disabled
+          -Dvulkan=disabled
+          -Dlibplacebo=disabled
+          -Djavascript=disabled
+          -Dpdf-build=disabled
+          -Ddvdnav=disabled
+          -Dcdda=disabled
+          -Dlibarchive=disabled
+          -Duchardet=disabled
+          -Drubberband=disabled
+          -Dzimg=disabled
+          -Dlibbluray=disabled
+          -Dlua=luajit
+          -Dtests=false
+          -Dmanpage-build=disabled
           EOF
 
           ./rebuild -j$(nproc)
