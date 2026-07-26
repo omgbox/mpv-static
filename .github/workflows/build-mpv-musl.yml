@@ -26,7 +26,8 @@ jobs:
             freetype-dev harfbuzz-dev fribidi-dev fontconfig-dev \
             expat-dev brotli-dev libpng-dev bzip2-dev graphite2-dev \
             libunibreak-dev luajit-dev libplacebo-dev \
-            libass-dev libva-dev dav1d-dev lame-dev
+            libass-dev libva-dev dav1d-dev lame-dev \
+            spirv-tools-dev glslang-dev
 
       - name: Build FFmpeg
         run: |
