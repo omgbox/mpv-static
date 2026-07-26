@@ -76,7 +76,7 @@ jobs:
 
           cat > mpv_options <<'EOF'
           -Dcplayer=false
-          -Dlibmpv=disabled
+          -Dlibmpv=false
           -Dalsa=disabled
           -Dpulse=disabled
           -Djack=disabled
