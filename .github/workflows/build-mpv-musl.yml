@@ -22,7 +22,7 @@ jobs:
             autoconf automake libtool \
             yasm nasm coreutils \
             linux-headers python3 file \
-            zlib-dev openssl-dev \
+            zlib-dev gnutls-dev \
             freetype-dev harfbuzz-dev fribidi-dev fontconfig-dev \
             expat-dev brotli-dev libpng-dev bzip2-dev graphite2-dev \
             libunibreak-dev luajit-dev libplacebo-dev \
@@ -32,14 +32,14 @@ jobs:
         run: |
           git clone --branch n$FFMPEG_VERSION --depth 1 https://github.com/FFmpeg/FFmpeg.git
           cd FFmpeg
-          ./configure \
+          PKG_CONFIG="pkg-config --static" ./configure \
             --prefix=/usr \
             --enable-gpl \
             --enable-version3 \
             --enable-nonfree \
             --enable-static \
             --disable-shared \
-            --enable-openssl \
+            --enable-gnutls \
             --enable-decoder='*' \
             --enable-parser='*' \
             --enable-muxer=mpeg1video \
