@@ -1,0 +1,133 @@
+name: Build MPV (Windows)
+
+on:
+  workflow_dispatch:
+
+env:
+  MPV_VERSION: "0.39.0"
+  FFMPEG_VERSION: "7.1.1"
+  LIBASS_VERSION: "0.17.3"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-meson
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-luajit
+            mingw-w64-x86_64-libplacebo
+            mingw-w64-x86_64-libass
+            mingw-w64-x86_64-freetype
+            mingw-w64-x86_64-harfbuzz
+            mingw-w64-x86_64-fribidi
+            mingw-w64-x86_64-fontconfig
+            mingw-w64-x86_64-libunibreak
+            mingw-w64-x86_64-openssl
+            git
+            base-devel
+
+      - name: Build FFmpeg
+        run: |
+          git clone --branch n${{ env.FFMPEG_VERSION }} --depth 1 https://github.com/FFmpeg/FFmpeg.git
+          cd FFmpeg
+          ./configure \
+            --prefix=/mingw64 \
+            --enable-gpl \
+            --enable-version3 \
+            --enable-static \
+            --disable-shared \
+            --enable-openssl \
+            --enable-decoder='*' \
+            --enable-parser='*' \
+            --enable-muxer=mpeg1video \
+            --enable-muxer=mpeg2video \
+            --enable-muxer=mp3 \
+            --enable-muxer=opus \
+            --enable-muxer=ass \
+            --enable-muxer=srt \
+            --enable-muxer=webvtt \
+            --enable-encoder=mpeg1video \
+            --enable-encoder=mpeg2video \
+            --enable-encoder=mp2 \
+            --enable-encoder=mp3 \
+            --enable-encoder=opus \
+            --enable-encoder=srt \
+            --enable-encoder=ass \
+            --disable-doc \
+            --disable-debug \
+            --disable-sndio \
+            --pkg-config-flags=--static \
+            --extra-libs='-static -lpthread' \
+            --target-os=mingw32 \
+            --arch=x86_64
+          make -j$(nproc)
+          make install
+
+      - name: Build mpv
+        run: |
+          git clone --branch v${{ env.MPV_VERSION }} --depth 1 https://github.com/mpv-player/mpv.git
+          cd mpv
+          meson setup build \
+            -Dbuildtype=release \
+            -Dlibmpv=false \
+            -Dcplayer=true \
+            -Dalsa=disabled \
+            -Dpulse=disabled \
+            -Djack=disabled \
+            -Dsndio=disabled \
+            -Degl-x11=disabled \
+            -Dx11=disabled \
+            -Dwayland=disabled \
+            -Dgl=disabled \
+            -Dvulkan=disabled \
+            -Djavascript=disabled \
+            -Dpdf-build=disabled \
+            -Ddvdnav=disabled \
+            -Dcdda=disabled \
+            -Dlibarchive=disabled \
+            -Duchardet=disabled \
+            -Drubberband=disabled \
+            -Dzimg=disabled \
+            -Dlibbluray=disabled \
+            -Dlua=luajit \
+            -Dlibplacebo=enabled \
+            -Dtests=false \
+            -Dmanpage-build=disabled \
+            -Dc_link_args='-static -lpthread' \
+            -Dcpp_link_args='-static -lpthread'
+          meson compile -C build
+
+      - name: Verify binary
+        run: |
+          ls -la mpv/build/mpv.exe
+          ./mpv/build/mpv.exe --version
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mpv-windows
+          path: mpv/build/mpv.exe
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mpv/build/mpv.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
