@@ -78,7 +78,8 @@ jobs:
             --pkg-config-flags=--static \
             --extra-libs='-static -lpthread' \
             --target-os=mingw32 \
-            --arch=x86_64
+            --arch=x86_64 \
+            --disable-x86asm
           make -j$(nproc)
           make install
 
