@@ -110,7 +110,6 @@ jobs:
             -Dzimg=disabled \
             -Dlibbluray=disabled \
             -Dlua=luajit \
-            -Dlibplacebo=enabled \
             -Dtests=false \
             -Dmanpage-build=disabled \
             -Dc_link_args='-static -lpthread' \
