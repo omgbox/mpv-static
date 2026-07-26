@@ -112,6 +112,7 @@ jobs:
             -Dlua=luajit \
             -Dtests=false \
             -Dmanpage-build=disabled \
+            -Dprefer_static=true \
             -Dc_link_args='-static -lpthread' \
             -Dcpp_link_args='-static -lpthread'
           meson compile -C build
