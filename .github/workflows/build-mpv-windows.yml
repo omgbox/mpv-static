@@ -40,6 +40,8 @@ jobs:
             mingw-w64-x86_64-fontconfig
             mingw-w64-x86_64-libunibreak
             mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-nasm
+            mingw-w64-x86_64-yasm
             git
             base-devel
 
