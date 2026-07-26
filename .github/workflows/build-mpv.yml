@@ -86,7 +86,6 @@ jobs:
           -Dwayland=disabled
           -Dgl=disabled
           -Dvulkan=disabled
-          -Dlibplacebo=disabled
           -Djavascript=disabled
           -Dpdf-build=disabled
           -Ddvdnav=disabled
