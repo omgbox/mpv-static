@@ -24,13 +24,14 @@ jobs:
           sudo apt-get install -y \
             git devscripts equivs \
             autoconf automake build-essential cmake \
-            libass-dev libfreetype-dev \
-            libssl-dev \
+            libass-dev libfreetype6-dev libharfbuzz-dev \
+            libfribidi-dev libfontconfig1-dev \
+            libssl-dev libdav1d-dev \
             libmp3lame-dev libtool libva-dev libvdpau-dev \
             libvorbis-dev libxcb1-dev libxcb-shm0-dev \
             libxcb-xfixes0-dev meson ninja-build pkg-config \
             texinfo wget yasm zlib1g-dev \
-            nasm libnuma-dev libdav1d-dev
+            nasm libnuma-dev
 
       - name: Build LuaJIT
         run: |
@@ -51,15 +52,8 @@ jobs:
           ./use-mpv-custom v${{ env.MPV_VERSION }}
 
           cat > ffmpeg_options <<'EOF'
-          --enable-static
-          --disable-shared
-          --enable-gpl
           --enable-version3
-          --enable-libass
-          --enable-libfreetype
           --enable-libdav1d
-          --enable-openssl
-          --disable-gnutls
           --enable-decoder=*
           --enable-parser=*
           --enable-muxer=mpeg1video
@@ -76,15 +70,12 @@ jobs:
           --enable-encoder=opus
           --enable-encoder=srt
           --enable-encoder=ass
-          --disable-doc
-          --disable-debug
+          --disable-sndio
           --extra-cflags=-static
           --extra-ldflags=-static
           EOF
 
           cat > mpv_options <<'EOF'
-          --enable-static
-          --disable-shared
           --disable-cplayer
           --disable-alsa
           --disable-pulse
@@ -107,7 +98,6 @@ jobs:
           --disable-zimg
           --disable-libsmbclient
           --disable-libarchive
-          --enable-libass
           --disable-libmpv-shared
           --enable-encoding
           --disable-tests
