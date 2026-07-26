@@ -32,7 +32,7 @@ jobs:
         run: |
           git clone --branch n$FFMPEG_VERSION --depth 1 https://github.com/FFmpeg/FFmpeg.git
           cd FFmpeg
-          PKG_CONFIG="pkg-config --static" ./configure \
+          ./configure \
             --prefix=/usr \
             --enable-gpl \
             --enable-version3 \
