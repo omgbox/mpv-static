@@ -22,7 +22,7 @@ jobs:
             autoconf automake libtool \
             yasm nasm coreutils \
             linux-headers python3 file \
-            zlib-dev gnutls-dev \
+            zlib-dev \
             freetype-dev harfbuzz-dev fribidi-dev fontconfig-dev \
             expat-dev brotli-dev libpng-dev bzip2-dev graphite2-dev \
             libunibreak-dev luajit-dev libplacebo-dev \
@@ -39,7 +39,6 @@ jobs:
             --enable-nonfree \
             --enable-static \
             --disable-shared \
-            --enable-gnutls \
             --enable-decoder='*' \
             --enable-parser='*' \
             --enable-muxer=mpeg1video \
