@@ -1,0 +1,115 @@
+name: Build MPV (musl - fully static)
+
+on:
+  workflow_dispatch:
+
+env:
+  MPV_VERSION: "0.39.0"
+  FFMPEG_VERSION: "7.1.1"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    container:
+      image: alpine:3.21
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          apk add --no-cache \
+            build-base git meson ninja cmake pkgconfig \
+            autoconf automake libtool \
+            yasm nasm coreutils \
+            linux-headers python3 file \
+            zlib-dev openssl-dev \
+            freetype-dev harfbuzz-dev fribidi-dev fontconfig-dev \
+            expat-dev brotli-dev libpng-dev bzip2-dev graphite2-dev \
+            libunibreak-dev luajit-dev libplacebo-dev \
+            libass-dev libva-dev dav1d-dev lame-dev
+
+      - name: Build FFmpeg
+        run: |
+          git clone --branch n$FFMPEG_VERSION --depth 1 https://github.com/FFmpeg/FFmpeg.git
+          cd FFmpeg
+          PKG_CONFIG="pkg-config --static" ./configure \
+            --prefix=/usr \
+            --enable-gpl \
+            --enable-version3 \
+            --enable-static \
+            --disable-shared \
+            --enable-openssl \
+            --enable-decoder='*' \
+            --enable-parser='*' \
+            --enable-muxer=mpeg1video \
+            --enable-muxer=mpeg2video \
+            --enable-muxer=mp3 \
+            --enable-muxer=opus \
+            --enable-muxer=ass \
+            --enable-muxer=srt \
+            --enable-muxer=webvtt \
+            --enable-encoder=mpeg1video \
+            --enable-encoder=mpeg2video \
+            --enable-encoder=mp2 \
+            --enable-encoder=mp3 \
+            --enable-encoder=opus \
+            --enable-encoder=srt \
+            --enable-encoder=ass \
+            --disable-doc \
+            --disable-debug \
+            --disable-sndio \
+            --extra-cflags=-static \
+            --extra-ldflags=-static
+          make -j$(nproc)
+          make install
+
+      - name: Build mpv
+        run: |
+          git clone --branch v$MPV_VERSION --depth 1 https://github.com/mpv-player/mpv.git
+          cd mpv
+          meson setup build \
+            -Dbuildtype=release \
+            -Dlibmpv=false \
+            -Dcplayer=true \
+            -Dalsa=disabled \
+            -Dpulse=disabled \
+            -Djack=disabled \
+            -Dsndio=disabled \
+            -Degl-x11=disabled \
+            -Dx11=disabled \
+            -Dwayland=disabled \
+            -Dgl=disabled \
+            -Dvulkan=disabled \
+            -Djavascript=disabled \
+            -Dpdf-build=disabled \
+            -Ddvdnav=disabled \
+            -Dcdda=disabled \
+            -Dlibarchive=disabled \
+            -Duchardet=disabled \
+            -Drubberband=disabled \
+            -Dzimg=disabled \
+            -Dlibbluray=disabled \
+            -Dlua=luajit \
+            -Dtests=false \
+            -Dmanpage-build=disabled \
+            -Dprefer_static=true \
+            -Dc_link_args=-static \
+            -Dcpp_link_args=-static
+          meson compile -C build
+
+      - name: Verify
+        run: |
+          file mpv/build/mpv
+          if readelf -l mpv/build/mpv 2>/dev/null | grep -q INTERP; then
+            echo "NOT fully static (has interpreter)"
+            ldd mpv/build/mpv
+          else
+            echo "FULLY STATIC (no interpreter)"
+          fi
+          mpv/build/mpv --version
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mpv-musl-static
+          path: mpv/build/mpv
