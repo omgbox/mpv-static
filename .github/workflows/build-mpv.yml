@@ -99,11 +99,9 @@ jobs:
           -Dlua=luajit
           -Dtests=false
           -Dmanpage-build=disabled
-          -Dc_link_args=-static
-          -Dcpp_link_args=-static
+          -Dprefer_static=true
           EOF
 
-          export PKG_CONFIG="pkg-config --static"
           ./rebuild -j$(nproc)
 
       - name: Verify binary
