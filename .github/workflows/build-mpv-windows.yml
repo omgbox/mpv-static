@@ -112,8 +112,8 @@ jobs:
             -Dlua=luajit \
             -Dtests=false \
             -Dmanpage-build=disabled \
-            -Dc_link_args='-static -lpthread' \
-            -Dcpp_link_args='-static -lpthread'
+            -Dc_link_args='-static -mconsole -lpthread' \
+            -Dcpp_link_args='-static -mconsole -lpthread'
           meson compile -C build
 
       - name: Verify binary
