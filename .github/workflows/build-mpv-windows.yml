@@ -32,7 +32,6 @@ jobs:
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-luajit
-            mingw-w64-x86_64-libplacebo
             mingw-w64-x86_64-libass
             mingw-w64-x86_64-freetype
             mingw-w64-x86_64-harfbuzz
@@ -91,6 +90,7 @@ jobs:
             -Dbuildtype=release \
             -Dlibmpv=false \
             -Dcplayer=true \
+            -Dgpl=true \
             -Dalsa=disabled \
             -Dpulse=disabled \
             -Djack=disabled \
@@ -100,6 +100,10 @@ jobs:
             -Dwayland=disabled \
             -Dgl=disabled \
             -Dvulkan=disabled \
+            -Dshaderc=disabled \
+            -Dspirv-cross=disabled \
+            -Ddirect3d=disabled \
+            -Dd3d11=disabled \
             -Djavascript=disabled \
             -Dpdf-build=disabled \
             -Ddvdnav=disabled \
