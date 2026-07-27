@@ -128,28 +128,9 @@ jobs:
 
       - name: Force console subsystem (patch PE header)
         run: |
-          python3 -c "
-import struct, sys
-path = r'mpv/build/mpv.exe'
-with open(path, 'rb') as f:
-    data = bytearray(f.read())
-offset = struct.unpack('<I', data[0x3C:0x40])[0]
-subsys_off = offset + 4 + 20 + 68
-old = data[subsys_off]
-data[subsys_off] = 3  # IMAGE_SUBSYSTEM_WINDOWS_CUI
-with open(path, 'wb') as f:
-    f.write(data)
-print(f'Patched subsystem: {old} -> 3 (CONSOLE)')
-"
+          python3 -c "import struct,sys;d=bytearray(open(r'mpv/build/mpv.exe','rb').read());o=struct.unpack('<I',d[0x3C:0x40])[0];print('Before:',d[o+92]);d[o+92]=3;open(r'mpv/build/mpv.exe','wb').write(d);print('Patched to CONSOLE')"
           echo "=== Subsystem verified ==="
-          python3 -c "
-import struct
-with open(r'mpv/build/mpv.exe', 'rb') as f:
-    data = f.read()
-offset = struct.unpack('<I', data[0x3C:0x40])[0]
-subsys = data[offset + 4 + 20 + 68]
-print('CONSOLE' if subsys == 3 else f'GUI ({subsys})')
-"
+          python3 -c "import struct;d=open(r'mpv/build/mpv.exe','rb').read();o=struct.unpack('<I',d[0x3C:0x40])[0];print('CONSOLE' if d[o+92]==3 else f'GUI ({d[o+92]})')"
 
       - name: Verify binary
         run: |
