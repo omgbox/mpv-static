@@ -93,9 +93,7 @@ jobs:
             -Dlua=luajit \
             -Dtests=false \
             -Dmanpage-build=disabled \
-            -Dprefer_static=true \
-            -Dc_link_args='-static -L/usr/lib' \
-            -Dcpp_link_args='-static -L/usr/lib'
+            -Dprefer_static=true
           meson compile -C build
 
       - name: Verify
