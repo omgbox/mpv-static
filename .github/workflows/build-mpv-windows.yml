@@ -121,6 +121,31 @@ jobs:
             -Dcpp_link_args='-static -mconsole -lpthread'
           meson compile -C build
 
+      - name: Force console subsystem (patch PE header)
+        run: |
+          python -c "
+import struct, sys
+path = r'mpv/build/mpv.exe'
+with open(path, 'rb') as f:
+    data = bytearray(f.read())
+offset = struct.unpack('<I', data[0x3C:0x40])[0]
+subsys_off = offset + 4 + 20 + 68
+old = data[subsys_off]
+data[subsys_off] = 3  # IMAGE_SUBSYSTEM_WINDOWS_CUI
+with open(path, 'wb') as f:
+    f.write(data)
+print(f'Patched subsystem: {old} -> 3 (CONSOLE)')
+"
+          echo "=== Subsystem verified ==="
+          python -c "
+import struct
+with open(r'mpv/build/mpv.exe', 'rb') as f:
+    data = f.read()
+offset = struct.unpack('<I', data[0x3C:0x40])[0]
+subsys = data[offset + 4 + 20 + 68]
+print('CONSOLE' if subsys == 3 else f'GUI ({subsys})')
+"
+
       - name: Verify binary
         run: |
           ls -la mpv/build/mpv.exe
