@@ -32,6 +32,7 @@ jobs:
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-luajit
+            mingw-w64-x86_64-libplacebo
             mingw-w64-x86_64-libass
             mingw-w64-x86_64-freetype
             mingw-w64-x86_64-harfbuzz
