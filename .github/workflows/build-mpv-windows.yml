@@ -92,7 +92,7 @@ jobs:
             -Ddefault_library=static \
             -Dvulkan=disabled \
             -Dshaderc=disabled \
-            -Dspirv-cross=disabled \
+            -Dglslang=disabled \
             -Dopengl=disabled \
             -Dd3d11=disabled \
             -Dlcms=disabled \
