@@ -1,4 +1,4 @@
-﻿name: Build Static MPV
+﻿name: Build Static MPV Linux
 
 on:
   push:
