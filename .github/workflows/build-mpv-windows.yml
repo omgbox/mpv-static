@@ -33,6 +33,8 @@ jobs:
             mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-luajit
             mingw-w64-x86_64-upx
+            mingw-w64-x86_64-vulkan-headers
+            mingw-w64-x86_64-python-jinja
             mingw-w64-x86_64-libass
             mingw-w64-x86_64-freetype
             mingw-w64-x86_64-harfbuzz
@@ -85,7 +87,6 @@ jobs:
 
       - name: Build libplacebo (static, headless)
         run: |
-          pacman -S --noconfirm mingw-w64-x86_64-python-jinja
           git clone --depth 1 --branch v7.360.1 https://github.com/haasn/libplacebo.git
           cd libplacebo
           meson setup build \
