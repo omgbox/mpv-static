@@ -1,0 +1,93 @@
+The run.sh file is like:
+
+#!/bin/bash
+
+# renovate: datasource=repology depName=debian_unstable/mpv
+MPV_VERSION="0.34.1"
+
+# renovate: datasource=repology depName=debian_unstable/ffmpeg
+FFMPEG_VERSION="5.1.2"
+
+# renovate: datasource=repology depName=debian_unstable/libass
+LIBASS_VERSION="0.16.0"
+
+# renovate: datasource=repology depName=debian_unstable/libplacebo
+LIBPLACEBO_VERSION="4.208.0"
+
+# renovate: datasource=repology depName=debian_unstable/luajit
+LUAJIT_VERSION="2.0.5"
+
+apt-get update
+apt-get install -y \
+    git devscripts equivs \
+    autoconf \
+    automake \
+    build-essential \
+    cmake \
+    git-core \
+    libass-dev \
+    libfreetype6-dev \
+    libgnutls28-dev \
+    libmp3lame-dev \
+    libsdl2-dev \
+    libtool \
+    libva-dev \
+    libvdpau-dev \
+    libvorbis-dev \
+    libxcb1-dev \
+    libxcb-shm0-dev \
+    libxcb-xfixes0-dev \
+    meson \
+    ninja-build \
+    pkg-config \
+    texinfo \
+    wget \
+    yasm \
+    zlib1g-dev
+
+# LuaJIT
+git clone https://github.com/LuaJIT/LuaJIT.git
+cd LuaJIT
+git checkout v${LUAJIT_VERSION}
+sed -i "s/mixed/static/g" src/Makefile
+make && make install
+cd ..
+
+# MPV
+git clone https://github.com/mpv-player/mpv-build.git
+cd mpv-build
+./use-libass-custom ${LIBASS_VERSION}
+./use-ffmpeg-custom n${FFMPEG_VERSION}
+./use-libplacebo-custom v${LIBPLACEBO_VERSION}
+./use-mpv-custom v${MPV_VERSION}
+echo "--disable-sndio" > ffmpeg_options
+echo "--disable-jpeg" > mpv_options
+./rebuild -j$(nproc)
+
+
+
+The CI-like file is:
+
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: mpv
+    image: debian:11.5-slim
+    commands:
+      - bash run.sh
+
+  - name: release
+    image: plugins/gitea-release
+    settings:
+      api_key:
+        from_secret: gitea_token
+      base_url: https://git.crystalyx.net
+      files:
+        - mpv-build/mpv/build/mpv
+    when:
+      event: tag
+
+
+
