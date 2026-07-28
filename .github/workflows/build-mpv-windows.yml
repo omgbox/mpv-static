@@ -5,11 +5,6 @@ on:
     tags:
       - '*'
   workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for manual trigger'
-        required: false
-        default: 'testing'
 
 env:
   MPV_VERSION: "0.39.0"
