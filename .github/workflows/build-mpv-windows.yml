@@ -85,7 +85,7 @@ jobs:
 
       - name: Build libplacebo (static, headless)
         run: |
-          python3 -m pip install jinja2
+          python3 -m ensurepip; python3 -m pip install jinja2
           git clone --depth 1 --branch v7.360.1 https://github.com/haasn/libplacebo.git
           cd libplacebo
           meson setup build \
