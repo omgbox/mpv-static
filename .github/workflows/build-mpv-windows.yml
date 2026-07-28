@@ -138,8 +138,8 @@ jobs:
             -Dtests=false \
             -Dmanpage-build=disabled \
             -Dprefer_static=true \
-            -Dc_link_args='-static -mconsole -lpthread -lstdc++' \
-            -Dcpp_link_args='-static -mconsole -lpthread -lstdc++'
+            -Dc_link_args='-static -mconsole -Wl,--whole-archive -lstdc++ -Wl,--no-whole-archive' \
+            -Dcpp_link_args='-static -mconsole -Wl,--whole-archive -lstdc++ -Wl,--no-whole-archive'
           meson compile -C build
 
       - name: Force console subsystem (patch PE header)
