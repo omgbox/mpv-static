@@ -105,7 +105,7 @@ jobs:
 
           # Reconfigure mpv with -static (avoids meson sanity check failure during setup)
           cd mpv
-          meson configure build -Dc_link_args=-static -Dcpp_link_args=-static
+          meson configure build -Dc_link_args='-static -L/usr/lib/x86_64-linux-gnu' -Dcpp_link_args='-static -L/usr/lib/x86_64-linux-gnu'
           ninja -C build -j$(nproc)
           cd ..
 
