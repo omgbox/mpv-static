@@ -10,7 +10,6 @@ env:
   MPV_VERSION: "0.39.0"
   FFMPEG_VERSION: "7.1.1"
   LIBASS_VERSION: "0.17.3"
-  LUAJIT_VERSION: "2.1"
 
 jobs:
   build:
@@ -100,11 +99,15 @@ jobs:
           -Dtests=false
           -Dmanpage-build=disabled
           -Dprefer_static=true
-          -Dc_link_args=-static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lstdc++ -Wl,--no-whole-archive
-          -Dcpp_link_args=-static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lstdc++ -Wl,--no-whole-archive
           EOF
 
           ./rebuild -j$(nproc)
+
+          # Reconfigure mpv with -static (avoids meson sanity check failure during setup)
+          cd mpv
+          meson configure build -Dc_link_args=-static -Dcpp_link_args=-static
+          ninja -C build -j$(nproc)
+          cd ..
 
       - name: Verify binary
         run: |
