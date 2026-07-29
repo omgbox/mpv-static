@@ -1,14 +1,14 @@
 # mpv-static
 
-Single-file static builds of **[mpv](https://mpv.io)** v0.39.0 player — zero external dependencies.
+Static/single-file builds of **[mpv](https://mpv.io)** v0.39.0 player.
 
 ## Downloads
 
-| Variant | Platform | Size | Build |
-|---------|----------|------|-------|
-| **Windows static + UPX** | Windows x64 | ~25 MB | MSYS2 MINGW64, GCC 16.1.0 |
-| **Linux glibc static** | Linux x64 | ~20 MB | Ubuntu 24.04, GCC 14 |
-| **Linux musl static** | Linux x64 (fully static) | ~20 MB | Alpine 3.21, musl |
+| Variant | Platform | Notes |
+|---------|----------|-------|
+| **Windows static + UPX** | Windows x64 | Fully static, zero DLL deps, UPX-compressed (~25 MB) |
+| **Linux glibc** | Linux x64 | Static deps, linked against system glibc/libstdc++ |
+| **Linux musl** | Linux x64 | musl-linked (not fully static) |
 
 Grab the latest binary from the [Releases](https://github.com/omgbox/mpv-static/releases) page.
 
@@ -35,17 +35,16 @@ mpv https://example.com/stream.m3u8
 
 ### Windows (static + UPX)
 - Fully static: **no DLLs** required — single `.exe`
-- UPX `--best` compressed (53% ratio)
+- UPX `--best` compressed (~54% ratio)
 - PE header patched to console subsystem
 - Trigger: push any tag, or `workflow_dispatch`
 
-### Linux (glibc static)
-- Statically linked against most libraries
-- glibc and libstdc++ remain dynamic (system-provided)
+### Linux (glibc)
+- Static deps, linked against system glibc/libstdc++
 - Trigger: push any tag, or `workflow_dispatch`
 
-### Linux (musl static)
-- Fully static musl-linked binary
+### Linux (musl)
+- musl-linked, not fully static
 - Trigger: `workflow_dispatch` only
 
 ## Build from source
