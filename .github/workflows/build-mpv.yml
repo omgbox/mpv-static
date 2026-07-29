@@ -10,7 +10,7 @@ env:
   MPV_VERSION: "0.39.0"
   FFMPEG_VERSION: "7.1.1"
   LIBASS_VERSION: "0.17.3"
-  LUAJIT_VERSION: "2.1.ROLLING"
+  LUAJIT_VERSION: "2.1"
 
 jobs:
   build:
@@ -39,7 +39,7 @@ jobs:
         run: |
           git clone https://github.com/LuaJIT/LuaJIT.git
           cd LuaJIT
-          git checkout v${{ env.LUAJIT_VERSION }} || git checkout master
+          git checkout master
           sed -i "s/mixed/static/g" src/Makefile
           make -j$(nproc)
           sudo make install
@@ -100,6 +100,8 @@ jobs:
           -Dtests=false
           -Dmanpage-build=disabled
           -Dprefer_static=true
+          -Dc_link_args=-static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lstdc++ -Wl,--no-whole-archive
+          -Dcpp_link_args=-static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lstdc++ -Wl,--no-whole-archive
           EOF
 
           ./rebuild -j$(nproc)
@@ -107,9 +109,13 @@ jobs:
       - name: Verify binary
         run: |
           file mpv-build/mpv/build/mpv
-          ldd mpv-build/mpv/build/mpv || echo "Static binary (no dynamic dependencies)"
-          mpv-build/mpv/build/mpv --list-encoders 2>/dev/null || true
-          mpv-build/mpv/build/mpv --list-decoders 2>/dev/null || true
+          if readelf -l mpv-build/mpv/build/mpv 2>/dev/null | grep -q INTERP; then
+            echo "NOT fully static (has interpreter)"
+            ldd mpv-build/mpv/build/mpv
+          else
+            echo "FULLY STATIC (no interpreter)"
+          fi
+          mpv-build/mpv/build/mpv --version
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
