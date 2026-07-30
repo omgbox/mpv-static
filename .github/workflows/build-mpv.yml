@@ -103,45 +103,48 @@ jobs:
           EOF
 
           PREFIX="$GITHUB_WORKSPACE/mpv-build/build_libs"
-          export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
           export PARALLEL=$(nproc)
+
+          # Build ffmpeg + libass + mpv (dynamic deps) first
+          cd "$GITHUB_WORKSPACE/mpv-build"
+          ./rebuild
+
+          echo "=== build_libs/lib/ after rebuild ==="
+          ls -la build_libs/lib/ 2>/dev/null
+
+          # Now build static versions of libs missing .a files on Ubuntu 24.04 Noble
+          # Must happen AFTER rebuild so build_libs/ is fully populated and won't get cleaned
+          export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:$PREFIX/lib/x86_64-linux-gnu/pkgconfig"
           mkdir -p "$PREFIX/lib/pkgconfig"
 
-          # Build static deps BEFORE anything else, so they're available for libass
-          rm -rf /tmp/libunibreak /tmp/graphite /tmp/harfbuzz
-
-          # libunibreak v6.1 (autotools)
+          # libunibreak v6.1 (autotools) — installs to $PREFIX/lib/
+          rm -rf /tmp/libunibreak
           git clone --depth 1 --branch libunibreak_6_1 https://github.com/adah1972/libunibreak.git /tmp/libunibreak
           cd /tmp/libunibreak
           ./autogen.sh
           ./configure --enable-static --disable-shared --prefix "$PREFIX"
           make -j$PARALLEL install
 
-          # graphite2 v1.3.14 (cmake)
+          # graphite2 v1.3.14 (cmake) — installs to $PREFIX/lib/
+          rm -rf /tmp/graphite
           git clone --depth 1 --branch 1.3.14 https://github.com/silnrsi/graphite.git /tmp/graphite
           cmake -B/tmp/graphite/build -S/tmp/graphite -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_POSITION_INDEPENDENT_CODE=ON
           cmake --build /tmp/graphite/build --target install
 
-          # harfbuzz v9.0.0 (meson)
+          # harfbuzz v9.0.0 (meson) — may install to $PREFIX/lib/x86_64-linux-gnu/
+          rm -rf /tmp/harfbuzz
           git clone --depth 1 --branch 9.0.0 https://github.com/harfbuzz/harfbuzz.git /tmp/harfbuzz
           meson setup /tmp/harfbuzz/build /tmp/harfbuzz -Ddefault_library=static --prefix "$PREFIX" -Dglib=disabled -Dgobject=disabled -Dcairo=disabled -Dicu=disabled -Dfreetype=enabled -Dgraphite2=enabled
           ninja -C /tmp/harfbuzz/build install
 
-          echo "=== build_libs/lib/ after static deps install ==="
-          ls -la "$PREFIX/lib/" 2>/dev/null || echo "(directory empty)"
-
-          # Now build ffmpeg, libass, mpv via rebuild
-          cd "$GITHUB_WORKSPACE/mpv-build"
-          ./rebuild
-
-          echo "=== build_libs/lib/ after rebuild ==="
-          ls -la build_libs/lib/ 2>/dev/null || echo "(directory empty)"
+          echo "=== build_libs/lib/ after static deps ==="
+          ls -la "$PREFIX/lib/" | grep -E 'unibreak|graphite|harfbuzz'
+          ls -la "$PREFIX/lib/x86_64-linux-gnu/" 2>/dev/null | grep -E 'unibreak|graphite|harfbuzz' || echo "(no x86_64-linux-gnu subdir)"
 
           # Reconfigure mpv with -static (avoids meson sanity check failure during setup)
-          cd mpv
-          meson configure build -Dc_link_args="-static -L$PREFIX/lib" -Dcpp_link_args="-static -L$PREFIX/lib"
+          cd "$GITHUB_WORKSPACE/mpv-build/mpv"
+          meson configure build -Dc_link_args="-static -L$PREFIX/lib -L$PREFIX/lib/x86_64-linux-gnu" -Dcpp_link_args="-static -L$PREFIX/lib -L$PREFIX/lib/x86_64-linux-gnu"
           ninja -C build -j$PARALLEL
-          cd ..
 
       - name: Verify binary
         run: |
