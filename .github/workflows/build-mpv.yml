@@ -51,8 +51,8 @@ jobs:
           ./configure --enable-static --disable-shared --prefix "$PREFIX"
           make -j$(nproc) install
 
-          # Build graphite2 v1.3.14 (uses cmake)
-          git clone --depth 1 --branch v1.3.14 https://github.com/silnrsi/graphite.git /tmp/graphite
+          # Build graphite2 v1.3.14 (uses cmake, tag is 1.3.14 not v1.3.14)
+          git clone --depth 1 --branch 1.3.14 https://github.com/silnrsi/graphite.git /tmp/graphite
           cmake -B/tmp/graphite/build -S/tmp/graphite -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_POSITION_INDEPENDENT_CODE=ON
           cmake --build /tmp/graphite/build --target install
 
