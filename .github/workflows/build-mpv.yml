@@ -39,24 +39,25 @@ jobs:
           PREFIX="$GITHUB_WORKSPACE/mpv-build/build_libs"
           export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
           mkdir -p "$PREFIX/lib/pkgconfig"
+          set -e
 
-          # Build libunibreak (provides -lunibreak)
-          git clone --depth 1 https://github.com/adah1972/libunibreak.git /tmp/libunibreak
-          cd /tmp/libunibreak
-          meson setup build -Ddefault_library=static --prefix "$PREFIX"
-          ninja -C build install
+          # Remove stale clones from previous runs
+          rm -rf /tmp/libunibreak /tmp/graphite /tmp/harfbuzz
 
-          # Build graphite2 (provides -lgraphite2)
-          git clone --depth 1 https://github.com/silnrsi/graphite.git /tmp/graphite
-          cd /tmp/graphite
-          cmake -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-          cmake --build build --target install
+          # Build libunibreak v6.1 (uses cmake, not meson!)
+          git clone --depth 1 --branch libunibreak_6_1 https://github.com/adah1972/libunibreak.git /tmp/libunibreak
+          cmake -B/tmp/libunibreak/build -S/tmp/libunibreak -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          cmake --build /tmp/libunibreak/build --target install
 
-          # Build harfbuzz (provides -lharfbuzz)
-          git clone --depth 1 https://github.com/harfbuzz/harfbuzz.git /tmp/harfbuzz
-          cd /tmp/harfbuzz
-          meson setup build -Ddefault_library=static --prefix "$PREFIX" -Dglib=disabled -Dgobject=disabled -Dcairo=disabled -Dicu=disabled -Dfreetype=enabled -Dgraphite2=enabled
-          ninja -C build install
+          # Build graphite2 v1.3.14 (uses cmake)
+          git clone --depth 1 --branch v1.3.14 https://github.com/silnrsi/graphite.git /tmp/graphite
+          cmake -B/tmp/graphite/build -S/tmp/graphite -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          cmake --build /tmp/graphite/build --target install
+
+          # Build harfbuzz v9.0.0 (uses meson)
+          git clone --depth 1 --branch 9.0.0 https://github.com/harfbuzz/harfbuzz.git /tmp/harfbuzz
+          meson setup /tmp/harfbuzz/build /tmp/harfbuzz -Ddefault_library=static --prefix "$PREFIX" -Dglib=disabled -Dgobject=disabled -Dcairo=disabled -Dicu=disabled -Dfreetype=enabled -Dgraphite2=enabled
+          ninja -C /tmp/harfbuzz/build install
 
           # Persist PKG_CONFIG_PATH for subsequent steps
           echo "PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig" >> "$GITHUB_ENV"
