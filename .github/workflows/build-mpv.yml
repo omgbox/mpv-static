@@ -34,36 +34,6 @@ jobs:
             libexpat1-dev libbrotli-dev libpng-dev libbz2-dev \
             libunibreak-dev libgraphite2-dev libpcre2-dev
 
-      - name: Build static deps from source (Ubuntu 24.04 Noble dropped .a files from -dev packages)
-        run: |
-          PREFIX="$GITHUB_WORKSPACE/mpv-build/build_libs"
-          export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
-          mkdir -p "$PREFIX/lib/pkgconfig"
-          set -e
-
-          # Remove stale clones from previous runs
-          rm -rf /tmp/libunibreak /tmp/graphite /tmp/harfbuzz
-
-          # Build libunibreak v6.1 (uses autotools, not cmake/meson!)
-          git clone --depth 1 --branch libunibreak_6_1 https://github.com/adah1972/libunibreak.git /tmp/libunibreak
-          cd /tmp/libunibreak
-          ./autogen.sh
-          ./configure --enable-static --disable-shared --prefix "$PREFIX"
-          make -j$(nproc) install
-
-          # Build graphite2 v1.3.14 (uses cmake, tag is 1.3.14 not v1.3.14)
-          git clone --depth 1 --branch 1.3.14 https://github.com/silnrsi/graphite.git /tmp/graphite
-          cmake -B/tmp/graphite/build -S/tmp/graphite -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-          cmake --build /tmp/graphite/build --target install
-
-          # Build harfbuzz v9.0.0 (uses meson)
-          git clone --depth 1 --branch 9.0.0 https://github.com/harfbuzz/harfbuzz.git /tmp/harfbuzz
-          meson setup /tmp/harfbuzz/build /tmp/harfbuzz -Ddefault_library=static --prefix "$PREFIX" -Dglib=disabled -Dgobject=disabled -Dcairo=disabled -Dicu=disabled -Dfreetype=enabled -Dgraphite2=enabled
-          ninja -C /tmp/harfbuzz/build install
-
-          # Persist PKG_CONFIG_PATH for subsequent steps
-          echo "PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig" >> "$GITHUB_ENV"
-
       - name: Build LuaJIT
         run: |
           git clone https://github.com/LuaJIT/LuaJIT.git
@@ -74,8 +44,9 @@ jobs:
           sudo make install
           cd ..
 
-      - name: Build MPV
+      - name: Build static deps + MPV
         run: |
+          set -e
           git clone https://github.com/mpv-player/mpv-build.git
           cd mpv-build
           ./use-libass-custom ${{ env.LIBASS_VERSION }}
@@ -131,6 +102,29 @@ jobs:
           -Dprefer_static=true
           EOF
 
+          # Build static deps from source (Ubuntu 24.04 Noble dropped .a files from -dev packages)
+          PREFIX="$GITHUB_WORKSPACE/mpv-build/build_libs"
+          export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
+          mkdir -p "$PREFIX/lib/pkgconfig"
+
+          # Build libunibreak v6.1 (autotools)
+          git clone --depth 1 --branch libunibreak_6_1 https://github.com/adah1972/libunibreak.git /tmp/libunibreak
+          cd /tmp/libunibreak
+          ./autogen.sh
+          ./configure --enable-static --disable-shared --prefix "$PREFIX"
+          make -j$(nproc) install
+
+          # Build graphite2 v1.3.14 (cmake)
+          git clone --depth 1 --branch 1.3.14 https://github.com/silnrsi/graphite.git /tmp/graphite
+          cmake -B/tmp/graphite/build -S/tmp/graphite -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          cmake --build /tmp/graphite/build --target install
+
+          # Build harfbuzz v9.0.0 (meson)
+          git clone --depth 1 --branch 9.0.0 https://github.com/harfbuzz/harfbuzz.git /tmp/harfbuzz
+          meson setup /tmp/harfbuzz/build /tmp/harfbuzz -Ddefault_library=static --prefix "$PREFIX" -Dglib=disabled -Dgobject=disabled -Dcairo=disabled -Dicu=disabled -Dfreetype=enabled -Dgraphite2=enabled
+          ninja -C /tmp/harfbuzz/build install
+
+          cd "$GITHUB_WORKSPACE/mpv-build"
           ./rebuild -j$(nproc)
 
           # Reconfigure mpv with -static (avoids meson sanity check failure during setup)
