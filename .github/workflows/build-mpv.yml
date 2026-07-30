@@ -44,10 +44,12 @@ jobs:
           # Remove stale clones from previous runs
           rm -rf /tmp/libunibreak /tmp/graphite /tmp/harfbuzz
 
-          # Build libunibreak v6.1 (uses cmake, not meson!)
+          # Build libunibreak v6.1 (uses autotools, not cmake/meson!)
           git clone --depth 1 --branch libunibreak_6_1 https://github.com/adah1972/libunibreak.git /tmp/libunibreak
-          cmake -B/tmp/libunibreak/build -S/tmp/libunibreak -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-          cmake --build /tmp/libunibreak/build --target install
+          cd /tmp/libunibreak
+          ./autogen.sh
+          ./configure --enable-static --disable-shared --prefix "$PREFIX"
+          make -j$(nproc) install
 
           # Build graphite2 v1.3.14 (uses cmake)
           git clone --depth 1 --branch v1.3.14 https://github.com/silnrsi/graphite.git /tmp/graphite
